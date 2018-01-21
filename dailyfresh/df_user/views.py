@@ -102,3 +102,8 @@ def user_center_site(request):
     context = {'title': '用户中心', 'user': user,
                'page_name': 1}
     return render(request, 'df_user/user_center_site.html', context)
+
+def logout(request):
+    request.session.flush()
+
+    return redirect('/index')

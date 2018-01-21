@@ -19,5 +19,8 @@ from django.conf.urls import url,include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    url(r'^user/', include('df_user.urls'))
+    url(r'^tinymce/', include('tinymce.urls')),
+    url(r'^user/', include('df_user.urls')),
+    url(r'', include('df_goods.urls')),
+
 ]
