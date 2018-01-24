@@ -1,4 +1,29 @@
 {%extends 'df_goods/base.html'%}
+{%block head%}
+<script>
+    $(function(){
+       $('.add_goods').click(function() {
+           //alert($('.login_btn').text())
+           //alert($(this).attr('value'));
+           //判断其是否登录
+           if ($('.login_btn').text().indexOf('登录') >= 0) {
+               alert('请先登录后再购买');
+               //alert($(this).attr('value'));
+               //从本页面跳转到登录页面
+               location.href = '/user/login';
+               return;
+           }
+           var goods_id = $(this).attr('value')
+           $.get('/cart/add'+goods_id+'_1',function(data){
+               $('#show_count').text(data.count);
+           });
+       });
+    });
+</script>
+
+{%endblock head%}
+
+
 {%block body%}
 	<div class="navbar_con">
 		<div class="navbar clearfix">
@@ -61,7 +86,7 @@
 					<div class="operate">
 						<span class="prize">￥{{g.gprice}}</span>
 						<span class="unit">{{g.gprice}}/{{g.gunit}}</span>
-						<a href="#" class="add_goods" title="加入购物车"></a>
+						<a href="javascript:;" class="add_goods" title="加入购物车" value="{{g.id}}"></a>
 					</div>
                 </li>
                 {%endfor%}

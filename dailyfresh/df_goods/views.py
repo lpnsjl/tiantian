@@ -27,13 +27,40 @@ def index(request):
         'type3': type3, 'type31': type31,
         'type4': type4, 'type41': type41,
         'type5': type5, 'type51': type01,
+        'title': '首页',
     }
 
     return render(request, 'df_goods/index.html',context)
 
 # 详情页视图
 def detail(request, id):
-    return render(request, 'df_goods/detail.html')
+    goods = GoodsInfo.objects.get(id=id)
+    # print (goods.gjianjie)
+    #print (goods.gclick)
+    # 点击量加一
+    goods.gclick += 1
+    goods.save()
+    context = {
+        'goods': goods,
+        'title': '商品详情',
+    }
+    response = render(request, 'df_goods/detail.html',context)
+    goods_ids = request.COOKIES.get('goods_ids', '')
+    if goods_ids == '':
+        # 用户第一次登录第一次浏览商品
+        goods_ids = str(goods.id)
+    else:
+        goods_id_list = goods_ids.split(',')
+        if goods_id_list.count(str(goods.id)) >= 1:
+            goods_id_list.remove(str(goods.id))
+        goods_id_list.insert(0,str(goods.id))
+        if len(goods_id_list) >5:
+            goods_id_list.pop()
+        goods_ids = ','.join(goods_id_list)
+    print (goods_ids)
+    # 用session存更好，因为cookie存储在浏览器端，只要浏览器未关闭，不同的用户之间共享了同一个cookie
+    response.set_cookie('goods_ids',goods_ids)
+    return response
 
 # 列表页视图
 def list(request,tid,pindex,sort):
@@ -60,6 +87,7 @@ def list(request,tid,pindex,sort):
         'goods_list': p.object_list,
         'paginator': paginator,
         'sort': sort,
+        'title': '商品列表',
 
     }
     return render(request, 'df_goods/list.html', context)

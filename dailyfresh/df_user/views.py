@@ -3,6 +3,8 @@ from django.shortcuts import render,redirect
 from df_user.models import *
 from hashlib import sha1
 from django.http import JsonResponse,HttpResponseRedirect
+from df_user import user_decorator
+from df_goods.models import *
 
 
 # 用户注册页面
@@ -63,7 +65,10 @@ def login_handle(request):
         s1 = sha1()
         s1.update(upwd.encode('utf-8'))
         if s1.hexdigest() == user[0].upwd:
-            red = HttpResponseRedirect('/user/info')
+            url = request.COOKIES.get('url', '/index')
+            red = HttpResponseRedirect(url)
+            # 成功转向后，删除地址，防止以后直接登录造成的转向
+            red.set_cookie('url', '', max_age=-1)
             if jizhu == 1:
                 red.set_cookie('uname', uname)
             else:
@@ -78,18 +83,45 @@ def login_handle(request):
     else:
         context = {'title': '登录', 'error_name': 1, 'error_pwd': 0,'uname': uname,'upwd':upwd}
         return render(request,'df_user/login.html',context)
+# 用户退出
+def logout(request):
+    request.session.flush()
+    return redirect('/index')
 
 # 用户中心个人信息页面
+@user_decorator.login
 def user_center_info(request):
     uemail = UserInfo.objects.filter(id=request.session['user_id'])[0].uemail
-    context = {'uname': request.session['uname'], 'uemail': uemail}
+    # 最近浏览的商品
+    goods_ids = request.COOKIES.get('goods_ids', '')
+    if goods_ids == '':
+        context = {'uname': request.session['uname'],
+                   'uemail': uemail,
+                   'goods_ids': goods_ids,
+                   }
+    else:
+        print (goods_ids)
+        zuijin = goods_ids.split(',')
+        goods_list = []
+        for id in zuijin:
+            goods_list.append(GoodsInfo.objects.filter(id=int(id))[0])
+
+        # print (goods_list[0])
+
+        context = {'uname': request.session['uname'],
+               'uemail': uemail,
+               'goods_list': goods_list,
+               'goods_ids': goods_ids,
+               }
     return render(request, 'df_user/user_center_info.html', context)
 
 # 用户个人订单信息
+@user_decorator.login
 def user_center_order(request):
     return render(request, 'df_user/user_center_order.html')
 
 # 用户地址信息
+@user_decorator.login
 def user_center_site(request):
     user = UserInfo.objects.get(id=request.session['user_id'])
     if request.method == 'POST':
@@ -103,7 +135,3 @@ def user_center_site(request):
                'page_name': 1}
     return render(request, 'df_user/user_center_site.html', context)
 
-def logout(request):
-    request.session.flush()
-
-    return redirect('/index')
