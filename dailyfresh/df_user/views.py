@@ -5,6 +5,8 @@ from hashlib import sha1
 from django.http import JsonResponse,HttpResponseRedirect
 from df_user import user_decorator
 from df_goods.models import *
+from df_order.models import *
+from django.core.paginator import Paginator
 
 
 # 用户注册页面
@@ -117,8 +119,20 @@ def user_center_info(request):
 
 # 用户个人订单信息
 @user_decorator.login
-def user_center_order(request):
-    return render(request, 'df_user/user_center_order.html')
+def user_center_order(request, pindex):
+    uid = request.session['user_id']
+    order = OrderInfo.objects.filter(user_id=uid).order_by('-oid')
+    # print (order[1].orderdetailinfo_set.all())
+    paginator = Paginator(order, 2)
+    # print (order[0].orderdetailinfo_set.all())
+    if pindex == '':
+        pindex = 1
+    page = paginator.page(int(pindex))
+    context = {
+        'page': page,
+    }
+
+    return render(request, 'df_user/user_center_order.html',context)
 
 # 用户地址信息
 @user_decorator.login
@@ -126,7 +140,7 @@ def user_center_site(request):
     user = UserInfo.objects.get(id=request.session['user_id'])
     if request.method == 'POST':
         post = request.POST
-        user.ushou = post.get('ushou')
+        user.ushoujian = post.get('ushou')
         user.uaddress = post.get('uaddress')
         user.uyoubian = post.get('uyoubian')
         user.uphone = post.get('uphone')
